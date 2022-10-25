@@ -26,21 +26,18 @@ class UserDaoTest {
 
     @BeforeEach
     public void before() {
-        userDao = context.getBean("userDao", UserDao.class);
-        this.u1 = new User("11","test1","pw2");
+        userDao = context.getBean("awsUserDao", UserDao.class);
+        this.u1 = new User("11", "test1", "pw2");
     }
 
     @Test
     public void test1() {
-        try {
-            userDao.add(this.u1);
-            User user = userDao.findById(this.u1.getId());
+        userDao.deleteAll();
+        userDao.add(this.u1);
 
-            assertEquals(this.u1.getName(),user.getName());
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        User user = userDao.findById(this.u1.getId());
+
+        assertEquals(this.u1.getName(), user.getName());
+
     }
 }

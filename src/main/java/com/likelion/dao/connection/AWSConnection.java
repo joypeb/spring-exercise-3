@@ -1,4 +1,4 @@
-package com.likelion.dao;
+package com.likelion.dao.connection;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
