@@ -18,6 +18,16 @@ public class UserDao {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
+    RowMapper<User> rowMapper = new RowMapper<User>() {
+        @Override
+        public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+            User user = new User(rs.getString("id"), rs.getString("name"),
+                    rs.getString("password"));
+            return user;
+        }
+    };
+
+
 
     public void add(final User user) {
         this.jdbcTemplate.update("INSERT INTO likelionDB.users(id,name,password) values (?,?,?);",
@@ -36,25 +46,11 @@ public class UserDao {
 
     public User findById(String id) {
         String sql = "SELECT * FROM likelionDB.users WHERE id = ?";
-        RowMapper<User> rowMapper = new RowMapper<User>() {
-            @Override
-            public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-                User user = new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
-                return user;
-            }
-        };
         return this.jdbcTemplate.queryForObject(sql, rowMapper, id);
     }
 
     public List<User> getAll() {
         String sql = "SELECT * FROM likelionDB.users ORDER BY id;";
-        RowMapper<User> rowMapper = new RowMapper<User>() {
-            @Override
-            public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-                User user = new User(rs.getString("id"),rs.getString("name"),rs.getString("password"));
-                return user;
-            }
-        };
         return this.jdbcTemplate.query(sql, rowMapper);
     }
 }
