@@ -1,7 +1,11 @@
 package com.likelion.dao;
 
+import com.likelion.domain.User;
+import org.springframework.dao.EmptyResultDataAccessException;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UserDao {
@@ -13,15 +17,15 @@ public class UserDao {
     }
 
 
-    public void add() throws ClassNotFoundException, SQLException {
+    public void add(final User user) throws ClassNotFoundException, SQLException {
 
         Connection c = connectionMaker.makeConnection();
 
         PreparedStatement ps = c.prepareStatement(
-                "insert into users(id, name, password) values(?, ?, ?)");
-        ps.setString(1, "01");
-        ps.setString(2, "test1");
-        ps.setString(3, "password");
+                "insert into likelionDB.users(id, name, password) values(?, ?, ?)");
+        ps.setString(1, user.getId());
+        ps.setString(2, user.getName());
+        ps.setString(3, user.getPassword());
 
         ps.executeUpdate();
 
@@ -29,4 +33,38 @@ public class UserDao {
         c.close();
     }
 
+    public User findById(String id) {
+
+        Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try{
+            c = connectionMaker.makeConnection();
+            ps = c.prepareStatement("select * from likelionDB.users where id = ?");
+            ps.setString(1,id);
+
+            rs = ps.executeQuery();
+
+            User user = null;
+
+            if(rs.next()) {
+                user = new User(rs.getString(1),rs.getString(2),rs.getString(3));
+            }
+
+            if (user == null) throw new EmptyResultDataAccessException(1);
+
+            rs.close();
+            ps.close();
+            c.close();
+
+            return user;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
 }
