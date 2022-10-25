@@ -23,8 +23,8 @@ public class Factory {
         SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
         dataSource.setDriverClass(com.mysql.cj.jdbc.Driver.class);
         dataSource.setUrl(env.get("DB_HOST"));
-        dataSource.setUrl(env.get("DB_USER"));
-        dataSource.setUrl(env.get("DB_PASSWORD"));
+        dataSource.setUsername(env.get("DB_USER"));
+        dataSource.setPassword(env.get("DB_PASSWORD"));
         return dataSource;
     }
 }

@@ -1,7 +1,5 @@
 package com.likelion.dao;
 
-import com.likelion.dao.strategy.AddStatement;
-import com.likelion.dao.strategy.DeleteAllStatement;
 import com.likelion.dao.strategy.StatementStrategy;
 import com.likelion.domain.User;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -24,13 +22,36 @@ public class UserDao {
 
 
     public void add(final User user) {
-        StatementStrategy st = new AddStatement(user);
-        jdbcContext.workWithStatementStrategy(st);
+        StatementStrategy stmt = new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection c) {
+                PreparedStatement ps = null;
+                try {
+                    ps = c.prepareStatement("INSERT INTO likelionDB.users(id, name, password) VALUES(?,?,?)");
+                    ps.setString(1, user.getId());
+                    ps.setString(2, user.getName());
+                    ps.setString(3, user.getPassword());
+                    return ps;
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+        jdbcContext.workWithStatementStrategy(stmt);
     }
 
     public void deleteAll() {
-        StatementStrategy st = new DeleteAllStatement();
-        jdbcContext.workWithStatementStrategy(st);
+        StatementStrategy stmt = new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection c) {
+                try {
+                    return c.prepareStatement("DELETE FROM likelionDB.users");
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+        jdbcContext.workWithStatementStrategy(stmt);
     }
 
     public User findById(String id) {
