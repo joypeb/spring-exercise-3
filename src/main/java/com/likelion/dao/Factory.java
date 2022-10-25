@@ -13,7 +13,7 @@ import java.util.Map;
 public class Factory {
 
     @Bean
-    public UserDao awsUserDao() {
+    public UserDao userDao() {
         return new UserDao(awsDataSource());
     }
 

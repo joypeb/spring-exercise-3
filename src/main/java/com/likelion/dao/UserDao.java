@@ -1,105 +1,60 @@
 package com.likelion.dao;
 
-import com.likelion.dao.strategy.StatementStrategy;
 import com.likelion.domain.User;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 public class UserDao {
 
-    private DataSource dataSource;
-    private JdbcContext jdbcContext;
+
+    private JdbcTemplate jdbcTemplate;
 
     public UserDao(DataSource dataSource) {
-        this.dataSource = dataSource;
-        this.jdbcContext = new JdbcContext(dataSource);
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
 
     public void add(final User user) {
-        StatementStrategy stmt = new StatementStrategy() {
-            @Override
-            public PreparedStatement makePreparedStatement(Connection c) {
-                PreparedStatement ps = null;
-                try {
-                    ps = c.prepareStatement("INSERT INTO likelionDB.users(id, name, password) VALUES(?,?,?)");
-                    ps.setString(1, user.getId());
-                    ps.setString(2, user.getName());
-                    ps.setString(3, user.getPassword());
-                    return ps;
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-        jdbcContext.workWithStatementStrategy(stmt);
+        this.jdbcTemplate.update("INSERT INTO likelionDB.users(id,name,password) values (?,?,?);",
+                user.getId(),user.getName(),user.getPassword());
+
     }
 
     public void deleteAll() {
-        StatementStrategy stmt = new StatementStrategy() {
-            @Override
-            public PreparedStatement makePreparedStatement(Connection c) {
-                try {
-                    return c.prepareStatement("DELETE FROM likelionDB.users");
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-        jdbcContext.workWithStatementStrategy(stmt);
+       this.jdbcTemplate.update("delete from likelionDB.users;");
+    }
+
+    public int getCount() {
+        int cnt = this.jdbcTemplate.queryForObject("SELECT COUNT(*) FROM likelionDB.users;",Integer.class);
+        return cnt;
     }
 
     public User findById(String id) {
-
-        Connection c = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            c = dataSource.getConnection();
-            ps = c.prepareStatement("select * from likelionDB.users where id = ?");
-            ps.setString(1, id);
-
-            rs = ps.executeQuery();
-
-            User user = null;
-
-            if (rs.next()) {
-                user = new User(rs.getString(1), rs.getString(2), rs.getString(3));
+        String sql = "SELECT * FROM likelionDB.users WHERE id = ?";
+        RowMapper<User> rowMapper = new RowMapper<User>() {
+            @Override
+            public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+                User user = new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
+                return user;
             }
+        };
+        return this.jdbcTemplate.queryForObject(sql, rowMapper, id);
+    }
 
-            if (user == null) throw new EmptyResultDataAccessException(1);
-
-            return user;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
+    public List<User> getAll() {
+        String sql = "SELECT * FROM likelionDB.users ORDER BY id;";
+        RowMapper<User> rowMapper = new RowMapper<User>() {
+            @Override
+            public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+                User user = new User(rs.getString("id"),rs.getString("name"),rs.getString("password"));
+                return user;
             }
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
-
-
+        };
+        return this.jdbcTemplate.query(sql, rowMapper);
     }
 }
